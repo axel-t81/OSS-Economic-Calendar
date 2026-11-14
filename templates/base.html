@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A free, open-source Australian economic calendar — past results, consensus forecasts, and daily digests.">
+    <title>{% block title %}OSS Economic Calendar{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <script src="{% static 'js/htmx.min.js' %}" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    <header class="site-header">
+        <div class="container">
+            <nav class="site-nav" aria-label="Main navigation">
+                <a class="brand" href="{% url 'events:home' %}">OSS&nbsp;Economic&nbsp;Calendar</a>
+                <div class="nav-links">
+                    {# Calendar and About pages arrive with the calendar UI milestone. #}
+                    <a href="{% url 'events:home' %}">Home</a>
+                    <a href="https://github.com/axel-t81/OSS-Economic-Calendar" rel="noopener" target="_blank">GitHub</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main" class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>
+                Free and open source under the
+                <a href="https://github.com/axel-t81/OSS-Economic-Calendar/blob/main/LICENSE" rel="noopener" target="_blank">MIT License</a>.
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
