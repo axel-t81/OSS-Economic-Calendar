@@ -218,3 +218,22 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---- Project-specific: OSS Economic Calendar ----
+
+# collectstatic output
+staticfiles/
+
+# user-uploaded files
+media/
+
+# Fly.io persistent volume mount point (SQLite lives here in production)
+/data/
+
+# local agent/workspace state
+.zcode/
+
+# local-only docs (agent guidance + work log)
+AGENTS.md
+WORKLOG.md
+

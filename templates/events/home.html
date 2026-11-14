@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}OSS Economic Calendar — a free Australian economic calendar{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Australian economic calendar,<br>free and open&nbsp;source.</h1>
+    <p class="hero-sub">
+        Track Australian economic releases — actual results, previous values, and consensus
+        forecasts — without a subscription. Built with Django, SQLite, and htmx.
+    </p>
+    <p class="badge">Project status: early development — the calendar itself is on the way.</p>
+</section>
+
+<section class="card-grid" aria-label="Planned features">
+    <article class="card">
+        <h2>Past &amp; upcoming releases</h2>
+        <p>Browse what has already been announced and what is scheduled next, from GDP and CPI to RBA decisions.</p>
+    </article>
+    <article class="card">
+        <h2>Result · Previous · Forecast</h2>
+        <p>Every release records the three data points that matter: the actual result, the previous value, and the consensus forecast.</p>
+    </article>
+    <article class="card">
+        <h2>Daily email digest</h2>
+        <p>One email each morning summarising yesterday's results, so nothing slips past you.</p>
+    </article>
+    <article class="card">
+        <h2>No paywall, ever</h2>
+        <p>Most economic calendars gate their data behind subscriptions. This one is MIT licensed and free to self-host.</p>
+    </article>
+</section>
+{% endblock %}
