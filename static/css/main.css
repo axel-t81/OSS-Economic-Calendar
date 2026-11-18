@@ -500,29 +500,29 @@ select {
     padding: 0.3rem 0.5rem 0.35rem 0.45rem;
     font-size: 0.72rem;
     line-height: 1.35;
+    /* Never let chip content bleed into a neighboring day cell. */
+    overflow: hidden;
 }
 
 .cal-event + .cal-event {
     border-top: 1px dashed var(--border);
 }
 
-.cal-event-head {
-    display: flex;
-    align-items: baseline;
-    gap: 0.35rem;
-}
-
+/* Time and name sit on their own lines. Sharing one line made the wider
+   "11:30 AM" label squeeze the name past the cell edge; stacking them gives
+   the name the full cell width and keeps wrapping predictable. */
 .cal-time {
+    display: block;
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
+    white-space: nowrap;
 }
 
-/* Full wrap, not ellipsis: every name readable without hovering.
-   break-word (not anywhere) so long words wrap whole, never mid-word. */
 .cal-name {
+    display: block;
     font-weight: 500;
     white-space: normal;
+    /* Wrap whole words; only break inside a word if it alone exceeds the cell. */
     overflow-wrap: break-word;
 }
 

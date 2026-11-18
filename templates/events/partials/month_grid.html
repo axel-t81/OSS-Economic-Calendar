@@ -45,7 +45,7 @@ inline with its values — no click needed. Plain links work without JS.
                         {% for event in cell.events %}
                         <div class="cal-event{% if event.is_past %} is-released{% endif %}">
                             <div class="cal-event-head">
-                                <span class="cal-time">{{ event.release_at|time:"g:i" }}</span>
+                                <span class="cal-time">{{ event.release_at|time:"g:i A" }}</span>
                                 <span class="cal-name" title="{{ event.indicator.name }} — {{ event.reference_period_label }}">{{ event.indicator.name }}</span>
                             </div>
                             <div class="cal-values">

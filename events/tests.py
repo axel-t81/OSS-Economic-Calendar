@@ -362,6 +362,14 @@ class MonthViewTests(TestCase):
             consensus=Decimal("3.000"),
             previous=Decimal("3.200"),
         )
+        # RBA-style 2:30 PM release: must carry a PM marker in the grid,
+        # or it reads as 2:30 AM (BugBot regression test).
+        self.afternoon_event = Event.objects.create(
+            indicator=self.cpi,
+            reference_period=date(2026, 8, 1),
+            release_at=sydney_datetime(2026, 11, 24, 14, 30),
+            consensus=Decimal("3.900"),
+        )
 
     def _get(self, **params):
         return self.client.get("/calendar/", params)
@@ -376,7 +384,8 @@ class MonthViewTests(TestCase):
     def test_month_page_renders_values_inline(self) -> None:
         response = self._get(year=2026, month=11)
         self.assertContains(response, "November 2026")
-        self.assertContains(response, "11:30")  # Sydney time
+        self.assertContains(response, "11:30 AM")  # Sydney time, with marker
+        self.assertContains(response, "2:30 PM")  # afternoon not read as AM
         # Chip values are unitless; the unit shows once per chip (v-unit).
         self.assertContains(response, "3.1")  # actual
         self.assertContains(response, "3.2")  # previous
