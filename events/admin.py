@@ -50,15 +50,17 @@ class EventAdmin(admin.ModelAdmin):
         always wins, so a revised "previous" from the source can be entered
         deliberately."""
         if obj.previous is None and obj.indicator_id:
-            latest = (
-                Event.objects.filter(
-                    indicator_id=obj.indicator_id,
-                    reference_period__lt=obj.reference_period,
-                    actual__isnull=False,
-                )
-                .order_by("-reference_period")
-                .first()
+            candidates = Event.objects.filter(
+                indicator_id=obj.indicator_id,
+                reference_period__lt=obj.reference_period,
+                actual__isnull=False,
             )
+            if obj.pk:
+                # The stored row still carries the pre-edit reference period, so
+                # an edit that moves the period forward could otherwise match
+                # this event's own row and copy its actual into previous.
+                candidates = candidates.exclude(pk=obj.pk)
+            latest = candidates.order_by("-reference_period").first()
             if latest is not None:
                 obj.previous = latest.actual
         super().save_model(request, obj, form, change)

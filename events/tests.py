@@ -232,3 +232,34 @@ class EventAdminTests(TestCase):
         self.assertEqual(response.status_code, 302)
         event = Event.objects.get(indicator=self.indicator, reference_period="2026-10-01")
         self.assertEqual(event.previous, Decimal("4.150"))
+
+    def test_previous_autofill_excludes_self_when_period_moved_forward(self) -> None:
+        # Regression (Cursor BugBot): editing an event and moving its reference
+        # period to a later date while `previous` is blank must not copy the
+        # event's own actual into previous — the DB row still carries the old,
+        # earlier date and would otherwise match the autofill query.
+        event = Event.objects.create(
+            indicator=self.indicator,
+            reference_period="2026-09-01",
+            release_at=timezone.now() - timedelta(days=30),
+            actual=Decimal("4.100"),
+            previous=Decimal("4.000"),
+        )
+        response = self.client.post(
+            f"/admin/events/event/{event.pk}/change/",
+            {
+                "indicator": str(self.indicator.pk),
+                "reference_period": "2026-10-01",
+                "release_at_0": "2026-11-19",
+                "release_at_1": "11:30:00",
+                "actual": "4.1",
+                "previous": "",
+                "consensus": "",
+                "source_url": "",
+                "notes": "",
+                "save": "Save",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        event.refresh_from_db()
+        self.assertIsNone(event.previous)
