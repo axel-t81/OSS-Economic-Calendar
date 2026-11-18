@@ -1,0 +1,69 @@
+{% load event_tags %}
+{% comment %}
+The htmx-swappable month grid: header + nav + calendar. Every event renders
+inline with its values — no click needed. Plain links work without JS.
+{% endcomment %}
+<div id="month-grid" class="month">
+    {% url 'events:month' as month_url %}
+    <div class="month-header">
+        <h1 class="month-title">{{ month_name }} {{ year }}</h1>
+        <nav class="month-nav" aria-label="Month navigation">
+            <a class="btn" href="{{ month_url }}?year={{ prev.year }}&amp;month={{ prev.month }}"
+               hx-get="{{ month_url }}?year={{ prev.year }}&amp;month={{ prev.month }}"
+               hx-target="#month-grid" hx-swap="outerHTML" hx-push-url="true">← {{ prev.label }}</a>
+            {% if year != today.year or month != today.month %}
+            <a class="btn" href="{{ month_url }}?year={{ today.year }}&amp;month={{ today.month }}"
+               hx-get="{{ month_url }}?year={{ today.year }}&amp;month={{ today.month }}"
+               hx-target="#month-grid" hx-swap="outerHTML" hx-push-url="true">Today</a>
+            {% endif %}
+            <a class="btn" href="{{ month_url }}?year={{ next.year }}&amp;month={{ next.month }}"
+               hx-get="{{ month_url }}?year={{ next.year }}&amp;month={{ next.month }}"
+               hx-target="#month-grid" hx-swap="outerHTML" hx-push-url="true">{{ next.label }} →</a>
+        </nav>
+    </div>
+    <p class="month-legend">
+        Values per release: <strong>actual</strong> · forecast · previous — all times Sydney.
+        <a href="{% url 'events:event_list' %}">Open the full list →</a>
+    </p>
+
+    <div class="month-scroll">
+        <table class="month-table">
+            <caption class="sr-only">{{ month_name }} {{ year }} — Australian economic releases by day</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Mon</th><th scope="col">Tue</th><th scope="col">Wed</th>
+                    <th scope="col">Thu</th><th scope="col">Fri</th><th scope="col">Sat</th><th scope="col">Sun</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for week in weeks %}
+                <tr>
+                    {% for cell in week %}
+                    {% if cell.day %}
+                    <td class="cal-day{% if year == today.year and month == today.month and cell.day == today.day %} today{% endif %}">
+                        <span class="cal-date">{{ cell.day }}</span>
+                        {% for event in cell.events %}
+                        <div class="cal-event{% if event.is_past %} is-released{% endif %}">
+                            <div class="cal-event-head">
+                                <span class="cal-time">{{ event.release_at|time:"g:i" }}</span>
+                                <span class="cal-name" title="{{ event.indicator.name }} — {{ event.reference_period_label }}">{{ event.indicator.name }}</span>
+                            </div>
+                            <div class="cal-values">
+                                <span class="v-a{% if event.surprise and event.surprise > 0 %} beat{% elif event.surprise and event.surprise < 0 %} miss{% endif %}">{{ event.actual|fmt_value }}</span>
+                                <span class="v-f">{{ event.consensus|fmt_value }}</span>
+                                <span class="v-p">{{ event.previous|fmt_value }}</span>
+                                <span class="v-unit">{{ event.indicator.unit }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </td>
+                    {% else %}
+                    <td class="cal-day cal-pad"></td>
+                    {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}OSS Economic Calendar — Australian economic releases{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Economic calendar</h1>
+        <p class="page-sub">
+            Australian economic releases with actual results, consensus forecasts and
+            previous values. All times Sydney.
+        </p>
+    </div>
+    <a class="btn" href="{% url 'events:month' %}">Month view</a>
+</div>
+
+{% include "events/partials/event_list_region.html" %}
+{% endblock %}
