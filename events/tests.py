@@ -279,6 +279,23 @@ class EventListViewTests(TestCase):
         self.assertIn(self.tomorrow_event.pk, pks)
         self.assertIn(self.today_released.pk, pks)
 
+    def test_source_change_drops_conflicting_indicator(self) -> None:
+        # Stale indicator from a previous selection (or an old bookmark) must
+        # not AND against the newly chosen source and empty the calendar.
+        response = self.client.get(
+            "/", {"tab": "all", "source": "rba", "indicator": self.abs_participation.slug}
+        )
+        pks = self._pks(response)
+        self.assertIn(self.tomorrow_event.pk, pks)  # RBA event still listed
+        self.assertNotIn(self.today_upcoming.pk, pks)  # ABS indicator not applied
+        self.assertEqual(response.context["indicator"], "")  # form matches query
+
+    def test_matching_source_and_indicator_still_filter(self) -> None:
+        response = self.client.get(
+            "/", {"tab": "all", "source": "abs", "indicator": self.abs_participation.slug}
+        )
+        self.assertEqual(self._pks(response), {self.today_upcoming.pk})
+
     def test_indicator_filter(self) -> None:
         response = self.client.get("/", {"tab": "all", "indicator": self.abs_participation.slug})
         self.assertEqual(self._pks(response), {self.today_upcoming.pk})
@@ -334,6 +351,19 @@ class EventListViewTests(TestCase):
     def test_empty_state_renders(self) -> None:
         response = self.client.get("/", {"tab": "past", "indicator": "no-such-slug"})
         self.assertContains(response, "No past releases match")
+
+    def test_empty_upcoming_state_points_to_all_tab(self) -> None:
+        Event.objects.all().delete()
+        response = self.client.get("/")
+        self.assertContains(response, "No upcoming releases")
+        self.assertContains(response, "try the")  # hint to the All tab
+
+    def test_empty_all_tab_state_does_not_point_at_itself(self) -> None:
+        Event.objects.all().delete()
+        response = self.client.get("/", {"tab": "all"})
+        self.assertContains(response, "No releases on the calendar yet")
+        self.assertNotContains(response, "No all releases")
+        self.assertNotContains(response, "try the")
 
 
 class MonthViewTests(TestCase):

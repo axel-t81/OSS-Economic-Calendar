@@ -41,6 +41,16 @@ def event_list(request: HttpRequest) -> HttpResponse:
     if source not in Indicator.Source.values:
         source = ""
     indicator_slug = request.GET.get("indicator", "")
+    # A stale indicator must not silently AND against an explicit source: if the
+    # source changed while an indicator was selected (or an old bookmark carries
+    # both), the combined filter would empty the calendar while the form shows
+    # "All indicators". Drop the indicator when its source conflicts.
+    if indicator_slug and source:
+        indicator_source = (
+            Indicator.objects.filter(slug=indicator_slug).values_list("source", flat=True).first()
+        )
+        if indicator_source != source:
+            indicator_slug = ""
 
     events = Event.objects.select_related("indicator").filter(indicator__is_active=True)
     if source:

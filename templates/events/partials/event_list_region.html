@@ -21,7 +21,8 @@ hx-* attributes upgrade them to partial swaps.
         <label>
             Source
             <select name="source"
-                    hx-get="{% url 'events:event_list' %}" hx-include="closest form"
+                    hx-get="{% url 'events:event_list' %}?tab={{ tab }}"
+                    hx-include="this"
                     hx-trigger="change" hx-target="#event-list" hx-swap="outerHTML"
                     hx-push-url="true">
                 <option value="">All sources</option>
@@ -94,9 +95,15 @@ hx-* attributes upgrade them to partial swaps.
     </div>
     {% else %}
     <p class="empty">
-        No {{ tab }} releases{% if source or indicator %} match these filters —
-        <a href="?tab={{ tab }}">clear filters</a>
-        {% else %} on the calendar yet — try the <a href="?tab=all">All</a> tab{% endif %}.
+        {% if source or indicator %}
+        {% if tab == "all" %}No releases{% elif tab == "past" %}No past releases{% else %}No upcoming releases{% endif %} match these filters — <a href="?tab={{ tab }}">clear filters</a>.
+        {% elif tab == "past" %}
+        No past releases on the calendar yet — try the <a href="?tab=all">All</a> tab.
+        {% elif tab == "all" %}
+        No releases on the calendar yet.
+        {% else %}
+        No upcoming releases on the calendar yet — try the <a href="?tab=all">All</a> tab.
+        {% endif %}
     </p>
     {% endif %}
 
