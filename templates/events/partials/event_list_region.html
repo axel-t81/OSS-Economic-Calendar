@@ -1,0 +1,126 @@
+{% load event_tags %}
+{% comment %}
+The htmx-swappable list region: tabs + filters + table + pagination.
+Every control is a plain link/GET form, so it all works without JavaScript;
+hx-* attributes upgrade them to partial swaps.
+{% endcomment %}
+<div id="event-list" class="event-list">
+    {% url 'events:event_list' as list_url %}
+    <nav class="tabs" aria-label="Time range">
+        {% for t in tabs %}
+        <a class="tab{% if t == tab %} active{% endif %}"
+           href="{{ list_url }}?tab={{ t }}{% if qs_extra %}&amp;{{ qs_extra }}{% endif %}"
+           hx-get="{{ list_url }}?tab={{ t }}{% if qs_extra %}&amp;{{ qs_extra }}{% endif %}"
+           hx-target="#event-list" hx-swap="outerHTML" hx-push-url="true"
+           {% if t == tab %}aria-current="page"{% endif %}>{{ t|capfirst }}</a>
+        {% endfor %}
+    </nav>
+
+    <form class="filters" method="get" action="{% url 'events:event_list' %}">
+        <input type="hidden" name="tab" value="{{ tab }}">
+        <label>
+            Source
+            <select name="source"
+                    hx-get="{% url 'events:event_list' %}?tab={{ tab }}"
+                    hx-include="this"
+                    hx-trigger="change" hx-target="#event-list" hx-swap="outerHTML"
+                    hx-push-url="true">
+                <option value="">All sources</option>
+                {% for code, label in source_choices %}
+                <option value="{{ code }}" {% if code == source %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Indicator
+            <select name="indicator"
+                    hx-get="{% url 'events:event_list' %}" hx-include="closest form"
+                    hx-trigger="change" hx-target="#event-list" hx-swap="outerHTML"
+                    hx-push-url="true">
+                <option value="">All indicators</option>
+                {% for source_label, group in indicator_groups %}
+                <optgroup label="{{ source_label }}">
+                    {% for ind in group %}
+                    <option value="{{ ind.slug }}" {% if ind.slug == indicator %}selected{% endif %}>{{ ind.name }}</option>
+                    {% endfor %}
+                </optgroup>
+                {% endfor %}
+            </select>
+        </label>
+        <button class="btn" type="submit">Apply</button>
+        {% if source or indicator %}
+        <a class="clear-filters" href="?tab={{ tab }}">Clear filters</a>
+        {% endif %}
+    </form>
+
+    {% if page.object_list %}
+    <div class="table-wrap">
+        <table class="event-table">
+            <caption class="sr-only">Economic releases, Sydney time</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Date &amp; time</th>
+                    <th scope="col">Indicator</th>
+                    <th scope="col" class="num">Previous</th>
+                    <th scope="col" class="num">Forecast</th>
+                    <th scope="col" class="num">Actual</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in page.object_list %}
+                <tr class="{% if event.is_past %}is-released{% endif %}{% if event.release_at|date:'Y-m-d' == today %} row-today{% endif %}">
+                    <td class="cell-date">
+                        <span class="date-main">{{ event.release_at|date:"D d M" }}</span>
+                        <span class="date-time">{{ event.release_at|time:"g:i A" }}</span>
+                    </td>
+                    <td class="cell-ind">
+                        <span class="ind-name">{{ event.indicator.name }}</span>
+                        <span class="ind-meta">{{ event.reference_period_label }} · {{ event.indicator.get_source_display }}</span>
+                    </td>
+                    <td class="num">{{ event.previous|fmt_value:event.indicator.unit }}</td>
+                    <td class="num{% if not event.is_past %} cell-forecast{% endif %}">{{ event.consensus|fmt_value:event.indicator.unit }}</td>
+                    <td class="num cell-actual{% if event.surprise and event.surprise > 0 %} beat{% elif event.surprise and event.surprise < 0 %} miss{% endif %}">
+                        {% if event.is_past %}
+                            {{ event.actual|fmt_value:event.indicator.unit }}{% if event.surprise %}
+                            <span class="surprise">({% if event.surprise > 0 %}+{% endif %}{{ event.surprise|fmt_value:event.indicator.unit }} vs forecast)</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="pending">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty">
+        {% if source or indicator %}
+        {% if tab == "all" %}No releases{% elif tab == "past" %}No past releases{% else %}No upcoming releases{% endif %} match these filters — <a href="?tab={{ tab }}">clear filters</a>.
+        {% elif tab == "past" %}
+        No past releases on the calendar yet — try the <a href="?tab=all">All</a> tab.
+        {% elif tab == "all" %}
+        No releases on the calendar yet.
+        {% else %}
+        No upcoming releases on the calendar yet — try the <a href="?tab=all">All</a> tab.
+        {% endif %}
+    </p>
+    {% endif %}
+
+    {% if page.has_other_pages %}
+    {% url 'events:event_list' as page_url %}
+    <nav class="pagination" aria-label="Pagination">
+        {% if page.has_previous %}
+        <a class="btn" href="{{ page_url }}?page={{ page.previous_page_number }}&amp;tab={{ tab }}{% if qs_extra %}&amp;{{ qs_extra }}{% endif %}"
+           hx-get="{{ page_url }}?page={{ page.previous_page_number }}&amp;tab={{ tab }}{% if qs_extra %}&amp;{{ qs_extra }}{% endif %}"
+           hx-target="#event-list" hx-swap="outerHTML" hx-push-url="true">‹ Prev</a>
+        {% endif %}
+        <span class="page-status">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}
+        <a class="btn" href="{{ page_url }}?page={{ page.next_page_number }}&amp;tab={{ tab }}{% if qs_extra %}&amp;{{ qs_extra }}{% endif %}"
+           hx-get="{{ page_url }}?page={{ page.next_page_number }}&amp;tab={{ tab }}{% if qs_extra %}&amp;{{ qs_extra }}{% endif %}"
+           hx-target="#event-list" hx-swap="outerHTML" hx-push-url="true">Next ›</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+</div>
